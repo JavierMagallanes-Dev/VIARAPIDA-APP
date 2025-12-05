@@ -26,7 +26,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
-import androidx.compose.runtime.rememberCoroutineScope
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuscarScreen(
@@ -40,7 +40,12 @@ fun BuscarScreen(
     var showResults by remember { mutableStateOf(false) }
     var isSearching by remember { mutableStateOf(false) }
 
-    // Lista de destinos disponibles (simulada)
+    // Estado del DatePicker
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = selectedDate.time
+    )
+
+    // Lista de destinos disponibles
     val destinosDisponibles = remember {
         listOf(
             Destino("1", "Ayacucho", "Lima", 45.0, 9, 564.0, "", true),
@@ -80,7 +85,7 @@ fun BuscarScreen(
                 .padding(paddingValues)
                 .background(BackgroundLight)
         ) {
-            // Formulario de búsqueda con diseño mejorado
+            // Formulario de búsqueda mejorado
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -128,7 +133,7 @@ fun BuscarScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Selector de Origen con diseño mejorado
+                    // Selector de Origen
                     OutlinedTextField(
                         value = origen,
                         onValueChange = { origen = it },
@@ -180,7 +185,7 @@ fun BuscarScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Selector de Fecha mejorado
+                    // Selector de Fecha con Calendario
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -229,7 +234,7 @@ fun BuscarScreen(
                                         fontWeight = FontWeight.Medium
                                     )
                                     Text(
-                                        text = SimpleDateFormat("dd/MM/yyyy", Locale("es", "PE")).format(selectedDate),
+                                        text = SimpleDateFormat("dd 'de' MMMM, yyyy", Locale("es", "PE")).format(selectedDate),
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = TextPrimary
@@ -247,11 +252,10 @@ fun BuscarScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Botón Buscar con gradiente
+                    // Botón Buscar
                     Button(
                         onClick = {
                             isSearching = true
-                            // Simular búsqueda con delay
                             kotlinx.coroutines.MainScope().launch {
                                 kotlinx.coroutines.delay(800)
                                 resultadosBusqueda = destinosDisponibles.filter {
@@ -308,7 +312,6 @@ fun BuscarScreen(
             // Resultados de búsqueda
             if (showResults) {
                 if (resultadosBusqueda.isEmpty()) {
-                    // Estado vacío mejorado
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -365,14 +368,12 @@ fun BuscarScreen(
                         }
                     }
                 } else {
-                    // Mostrar resultados
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 16.dp)
                     ) {
                         item {
-                            // Header de resultados
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -420,7 +421,6 @@ fun BuscarScreen(
                     }
                 }
             } else {
-                // Sugerencias rápidas mejoradas
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -461,6 +461,51 @@ fun BuscarScreen(
             }
         }
     }
+
+    // DatePickerDialog
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            selectedDate = Date(millis)
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("Aceptar", color = PrimaryBlue, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            colors = DatePickerDefaults.colors(
+                containerColor = Color.White
+            )
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    selectedDayContainerColor = PrimaryBlue,
+                    todayContentColor = PrimaryBlue,
+                    todayDateBorderColor = PrimaryBlue
+                ),
+                title = {
+                    Text(
+                        "Selecciona la fecha de viaje",
+                        modifier = Modifier.padding(16.dp),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                }
+            )
+        }
+    }
 }
 
 @Composable
@@ -494,7 +539,6 @@ fun DestinoCard(destino: Destino, onClick: () -> Unit) {
         )
     ) {
         Box {
-            // Gradiente decorativo en la parte superior
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -513,7 +557,6 @@ fun DestinoCard(destino: Destino, onClick: () -> Unit) {
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Header con ruta
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -557,7 +600,6 @@ fun DestinoCard(destino: Destino, onClick: () -> Unit) {
                         }
                     }
 
-                    // Flecha
                     Icon(
                         Icons.Default.ArrowForward,
                         contentDescription = null,
@@ -612,7 +654,6 @@ fun DestinoCard(destino: Destino, onClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Divider con gradiente
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -630,7 +671,6 @@ fun DestinoCard(destino: Destino, onClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Información del viaje
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -652,7 +692,6 @@ fun DestinoCard(destino: Destino, onClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Precio y botón
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,

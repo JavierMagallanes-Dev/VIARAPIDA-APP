@@ -1,10 +1,16 @@
 package com.viarapida.pasajes.presentation.main.buscar
 
-import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.*
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -13,6 +19,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -39,6 +47,7 @@ fun PagoScreen(
     var metodoPagoSeleccionado by remember { mutableStateOf<MetodoPago?>(null) }
     var showDialogPago by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
+    var processingProgress by remember { mutableStateOf(0f) }
 
     // Campos para tarjeta
     var numeroTarjeta by remember { mutableStateOf("") }
@@ -52,7 +61,16 @@ fun PagoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Confirmar pago") },
+                title = {
+                    Column {
+                        Text("Confirmar Pago", fontWeight = FontWeight.Bold)
+                        Text(
+                            "Paso 3 de 3",
+                            fontSize = 12.sp,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -72,103 +90,241 @@ fun PagoScreen(
                 .padding(paddingValues)
                 .background(BackgroundLight)
         ) {
-            // Resumen del viaje
+            // Resumen del viaje mejorado
             item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(20.dp)
                     ) {
-                        Text(
-                            text = "Resumen del viaje",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                        // Header con gradiente
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(PrimaryBlue, SecondaryOrange)
+                                    ),
+                                    shape = RoundedCornerShape(2.dp)
+                                )
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(
-                                    text = destino.origen,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryBlue
-                                )
-                                Text(
-                                    text = horario.horaSalida,
-                                    fontSize = 14.sp,
-                                    color = TextSecondary
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .background(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(PrimaryBlue, PrimaryBlueDark)
+                                        ),
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Receipt,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
 
-                            Icon(
-                                Icons.Default.ArrowForward,
-                                contentDescription = null,
-                                tint = SecondaryOrange,
-                                modifier = Modifier.padding(top = 8.dp)
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Text(
+                                text = "Resumen de tu viaje",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
                             )
-
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = destino.destino,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryBlue
-                                )
-                                Text(
-                                    text = horario.horaLlegada,
-                                    fontSize = 14.sp,
-                                    color = TextSecondary
-                                )
-                            }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Divider(color = DividerColor)
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
-                        // Detalles
-                        DetalleItem(label = "Fecha", valor = horario.fechaFormateada())
-                        Spacer(modifier = Modifier.height(8.dp))
-                        DetalleItem(label = "Tipo de bus", valor = horario.tipoBus)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        DetalleItem(label = "Asiento", valor = "Nº $numeroAsiento")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        DetalleItem(label = "Duración", valor = destino.duracionFormateada())
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Divider(color = DividerColor)
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Total
+                        // Ruta principal
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Total a pagar",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                            Column {
+                                Text(
+                                    text = "Origen",
+                                    fontSize = 11.sp,
+                                    color = TextSecondary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = destino.origen,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrimaryBlue
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = horario.horaSalida,
+                                    fontSize = 15.sp,
+                                    color = TextSecondary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .background(
+                                        color = SecondaryOrange.copy(alpha = 0.15f),
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.ArrowForward,
+                                    contentDescription = null,
+                                    tint = SecondaryOrange,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = "Destino",
+                                    fontSize = 11.sp,
+                                    color = TextSecondary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = destino.destino,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrimaryBlue
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = horario.horaLlegada,
+                                    fontSize = 15.sp,
+                                    color = TextSecondary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Divider(color = DividerColor.copy(alpha = 0.5f))
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Detalles del viaje en grid
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            DetalleItemCompacto(
+                                icono = Icons.Default.CalendarToday,
+                                label = "Fecha",
+                                valor = horario.fechaFormateada(),
+                                color = InfoBlue
                             )
-                            Text(
-                                text = destino.precioFormateado(),
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.Bold,
+
+                            DetalleItemCompacto(
+                                icono = Icons.Default.DirectionsBus,
+                                label = "Tipo Bus",
+                                valor = horario.tipoBus,
                                 color = SuccessGreen
                             )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            DetalleItemCompacto(
+                                icono = Icons.Default.EventSeat,
+                                label = "Asiento",
+                                valor = "Nº $numeroAsiento",
+                                color = SecondaryOrange
+                            )
+
+                            DetalleItemCompacto(
+                                icono = Icons.Default.Schedule,
+                                label = "Duración",
+                                valor = destino.duracionFormateada(),
+                                color = WarningYellow
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Divider(color = DividerColor.copy(alpha = 0.5f))
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Total a pagar destacado
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            SuccessGreen.copy(alpha = 0.1f),
+                                            SuccessGreen.copy(alpha = 0.05f)
+                                        )
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "Total a pagar",
+                                        fontSize = 14.sp,
+                                        color = TextSecondary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = "1 pasajero",
+                                        fontSize = 12.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+                                Row(verticalAlignment = Alignment.Bottom) {
+                                    Text(
+                                        text = "S/",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SuccessGreen
+                                    )
+                                    Text(
+                                        text = " ${destino.precio.toInt()}",
+                                        fontSize = 38.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = SuccessGreen
+                                    )
+                                    Text(
+                                        text = ".00",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SuccessGreen
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -176,13 +332,26 @@ fun PagoScreen(
 
             // Métodos de pago
             item {
-                Text(
-                    text = "Selecciona tu método de pago",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Payment,
+                        contentDescription = null,
+                        tint = PrimaryBlue,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Método de pago",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                }
             }
 
             item {
@@ -192,30 +361,34 @@ fun PagoScreen(
                         .padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    MetodoPagoCard(
+                    MetodoPagoCardMejorado(
                         titulo = "Tarjeta de Crédito/Débito",
                         icono = Icons.Default.CreditCard,
+                        descripcion = "Visa, Mastercard, American Express",
                         isSelected = metodoPagoSeleccionado == MetodoPago.TARJETA,
                         onClick = { metodoPagoSeleccionado = MetodoPago.TARJETA }
                     )
 
-                    MetodoPagoCard(
+                    MetodoPagoCardMejorado(
                         titulo = "Yape",
                         icono = Icons.Default.Phone,
+                        descripcion = "Pago instantáneo con Yape",
                         isSelected = metodoPagoSeleccionado == MetodoPago.YAPE,
                         onClick = { metodoPagoSeleccionado = MetodoPago.YAPE }
                     )
 
-                    MetodoPagoCard(
+                    MetodoPagoCardMejorado(
                         titulo = "Plin",
                         icono = Icons.Default.PhoneAndroid,
+                        descripcion = "Pago rápido con Plin",
                         isSelected = metodoPagoSeleccionado == MetodoPago.PLIN,
                         onClick = { metodoPagoSeleccionado = MetodoPago.PLIN }
                     )
 
-                    MetodoPagoCard(
+                    MetodoPagoCardMejorado(
                         titulo = "Efectivo en agencia",
                         icono = Icons.Default.AttachMoney,
+                        descripcion = "Paga al recoger tu pasaje",
                         isSelected = metodoPagoSeleccionado == MetodoPago.EFECTIVO,
                         onClick = { metodoPagoSeleccionado = MetodoPago.EFECTIVO }
                     )
@@ -325,7 +498,7 @@ fun PagoScreen(
                                     placeholder = { Text("987654321") },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                                     leadingIcon = {
-                                        Text("+51", color = TextSecondary)
+                                        Text("+51", color = TextSecondary, modifier = Modifier.padding(start = 8.dp))
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -416,9 +589,12 @@ fun PagoScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                         .height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = SecondaryOrange),
-                    enabled = metodoPagoSeleccionado != null && !isProcessing
+                    enabled = metodoPagoSeleccionado != null && !isProcessing,
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 4.dp
+                    )
                 ) {
                     if (isProcessing) {
                         CircularProgressIndicator(
@@ -426,13 +602,17 @@ fun PagoScreen(
                             modifier = Modifier.size(24.dp)
                         )
                     } else {
-                        Text(
-                            text = "Confirmar pago",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
+                        Icon(
+                            Icons.Default.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(Icons.Default.Check, contentDescription = null)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Confirmar pago seguro",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -443,10 +623,14 @@ fun PagoScreen(
         }
     }
 
-    // Diálogo de procesamiento de pago
+    // Diálogo de procesamiento de pago mejorado
     if (showDialogPago) {
         LaunchedEffect(Unit) {
-            kotlinx.coroutines.delay(2000) // Simular procesamiento
+            for (i in 0..100 step 10) {
+                processingProgress = i / 100f
+                kotlinx.coroutines.delay(200)
+            }
+            kotlinx.coroutines.delay(500)
             isProcessing = false
             onPagoCompletado()
         }
@@ -460,90 +644,173 @@ fun PagoScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     CircularProgressIndicator(
+                        progress = { processingProgress },
+                        modifier = Modifier.size(64.dp),
                         color = PrimaryBlue,
-                        modifier = Modifier.size(48.dp)
+                        strokeWidth = 6.dp,
                     )
                 }
             },
             text = {
-                Text(
-                    text = "Procesando tu pago...\nEspera un momento",
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Procesando tu pago...",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Por favor espera un momento",
+                        fontSize = 14.sp,
+                        color = TextSecondary,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LinearProgressIndicator(
+                        progress = { processingProgress },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = PrimaryBlue,
+                    )
+                }
             }
         )
     }
 }
 
 @Composable
-fun DetalleItem(label: String, valor: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+fun DetalleItemCompacto(
+    icono: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    valor: String,
+    color: Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .background(
+                color = color.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
+        Icon(
+            imageVector = icono,
+            contentDescription = label,
+            tint = color,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = label,
-            fontSize = 14.sp,
-            color = TextSecondary
+            fontSize = 10.sp,
+            color = TextSecondary,
+            fontWeight = FontWeight.Medium
         )
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = valor,
             fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextPrimary
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary,
+            textAlign = TextAlign.Center
         )
     }
 }
 
 @Composable
-fun MetodoPagoCard(
+fun MetodoPagoCardMejorado(
     titulo: String,
     icono: androidx.compose.ui.graphics.vector.ImageVector,
+    descripcion: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.02f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "scale"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .scale(scale)
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) PrimaryBlueLight.copy(alpha = 0.2f) else Color.White
+            containerColor = if (isSelected) PrimaryBlueLight.copy(alpha = 0.15f) else Color.White
         ),
         border = if (isSelected) {
-            androidx.compose.foundation.BorderStroke(2.dp, PrimaryBlue)
-        } else null
+            androidx.compose.foundation.BorderStroke(3.dp, PrimaryBlue)
+        } else {
+            androidx.compose.foundation.BorderStroke(1.dp, DividerColor)
+        },
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 8.dp else 2.dp
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(
+                        color = if (isSelected) PrimaryBlue.copy(alpha = 0.15f) else BackgroundLight,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(
                     imageVector = icono,
                     contentDescription = titulo,
                     tint = if (isSelected) PrimaryBlue else TextSecondary,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(28.dp)
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = titulo,
                     fontSize = 16.sp,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                     color = if (isSelected) PrimaryBlue else TextPrimary
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = descripcion,
+                    fontSize = 12.sp,
+                    color = TextSecondary
                 )
             }
 
             if (isSelected) {
-                Icon(
-                    Icons.Default.CheckCircle,
-                    contentDescription = "Seleccionado",
-                    tint = PrimaryBlue
-                )
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(
+                            color = PrimaryBlue,
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = "Seleccionado",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
