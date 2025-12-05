@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "483143430664",
+    "project_id": "via-rapida-17c51",
+    "storage_bucket": "via-rapida-17c51.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:483143430664:android:c02b6ed441dae18b2657bd",
+        "android_client_info": {
+          "package_name": "com.viarapida.pasajes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTxKyFB1M14oAo7QcPUfUrTVr3RifhQyY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

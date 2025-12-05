@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores Primarios -->
+    <color name="primary_blue">#1976D2</color>
+    <color name="primary_blue_light">#63A4FF</color>
+    <color name="primary_blue_dark">#004BA0</color>
+
+    <!-- Colores Secundarios -->
+    <color name="secondary_orange">#FF9800</color>
+    <color name="secondary_orange_light">#FFCA28</color>
+    <color name="secondary_orange_dark">#F57C00</color>
+
+    <!-- Colores Base -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="background_light">#F5F7FA</color>
+    <color name="background_dark">#121212</color>
+
+    <!-- Colores de Estado -->
+    <color name="success_green">#4CAF50</color>
+    <color name="error_red">#F44336</color>
+    <color name="warning_yellow">#FFC107</color>
+    <color name="info_blue">#2196F3</color>
+
+    <!-- Colores de Texto -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_disabled">#BDBDBD</color>
+</resources>
