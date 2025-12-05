@@ -1,4 +1,6 @@
 package com.viarapida.pasajes.presentation.main.buscar
+
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -6,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,6 +16,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,14 +48,13 @@ fun SeleccionAsientosScreen(
     onContinuar: (Int) -> Unit
 ) {
     var asientoSeleccionado by remember { mutableStateOf<Int?>(null) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
-    // Generar asientos (45 asientos en total: 11 filas x 4 columnas + pasillo)
+    // Generar asientos (45 asientos: 11 filas x 4 columnas)
     val asientos = remember {
         (1..45).map { numero ->
             val fila = (numero - 1) / 4
             val columna = (numero - 1) % 4
-
-            // Simular algunos asientos ocupados
             val ocupados = listOf(1, 3, 7, 12, 15, 20, 23, 28, 35, 40)
 
             Asiento(
@@ -66,7 +71,12 @@ fun SeleccionAsientosScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Selecciona tu asiento") },
+                title = {
+                    Text(
+                        "Selecciona tu asiento",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -81,69 +91,13 @@ fun SeleccionAsientosScreen(
         },
         bottomBar = {
             if (asientoSeleccionado != null) {
-                Surface(
-                    shadowElevation = 8.dp,
-                    color = Color.White
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = "Asiento seleccionado",
-                                    fontSize = 12.sp,
-                                    color = TextSecondary
-                                )
-                                Text(
-                                    text = "Nº $asientoSeleccionado",
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryBlue
-                                )
-                            }
-
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = "Total a pagar",
-                                    fontSize = 12.sp,
-                                    color = TextSecondary
-                                )
-                                Text(
-                                    text = destino.precioFormateado(),
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = SuccessGreen
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Button(
-                            onClick = { asientoSeleccionado?.let { onContinuar(it) } },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = SecondaryOrange)
-                        ) {
-                            Text(
-                                text = "Continuar al pago",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(Icons.Default.ArrowForward, contentDescription = null)
-                        }
+                BottomBarSeleccionado(
+                    numeroAsiento = asientoSeleccionado!!,
+                    precio = destino.precio,
+                    onContinuar = {
+                        showConfirmDialog = true
                     }
-                }
+                )
             }
         }
     ) { paddingValues ->
@@ -151,124 +105,64 @@ fun SeleccionAsientosScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(BackgroundLight)
+                .background(BackgroundLight),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Información del viaje
             item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(
-                                    text = destino.origen,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = horario.horaSalida,
-                                    fontSize = 14.sp,
-                                    color = TextSecondary
-                                )
-                            }
-
-                            Icon(
-                                Icons.Default.ArrowForward,
-                                contentDescription = null,
-                                tint = SecondaryOrange
-                            )
-
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = destino.destino,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = horario.horaLlegada,
-                                    fontSize = 14.sp,
-                                    color = TextSecondary
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Surface(
-                                color = PrimaryBlueLight.copy(alpha = 0.2f),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        Icons.Default.DirectionsBus,
-                                        contentDescription = null,
-                                        tint = PrimaryBlue,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = horario.tipoBus,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = PrimaryBlue
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Leyenda
+            // Info del viaje compacta
             item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        LeyendaItem(
-                            color = Color.White,
-                            borderColor = TextSecondary,
-                            label = "Disponible"
+                        Column {
+                            Text(
+                                text = destino.origen,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryBlue
+                            )
+                            Text(
+                                text = horario.horaSalida,
+                                fontSize = 13.sp,
+                                color = TextSecondary
+                            )
+                        }
+
+                        Icon(
+                            Icons.Default.ArrowForward,
+                            contentDescription = null,
+                            tint = SecondaryOrange,
+                            modifier = Modifier.size(28.dp)
                         )
-                        LeyendaItem(
-                            color = TextDisabled,
-                            borderColor = TextDisabled,
-                            label = "Ocupado"
-                        )
-                        LeyendaItem(
-                            color = SecondaryOrange,
-                            borderColor = SecondaryOrange,
-                            label = "Seleccionado"
-                        )
+
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = destino.destino,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryBlue
+                            )
+                            Text(
+                                text = horario.horaLlegada,
+                                fontSize = 13.sp,
+                                color = TextSecondary
+                            )
+                        }
                     }
                 }
             }
@@ -277,7 +171,7 @@ fun SeleccionAsientosScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Mapa del bus
+            // Leyenda mejorada
             item {
                 Card(
                     modifier = Modifier
@@ -285,40 +179,87 @@ fun SeleccionAsientosScreen(
                         .padding(horizontal = 16.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        LeyendaItemMejorado(
+                            color = Color.White,
+                            borderColor = PrimaryBlue,
+                            label = "Disponible",
+                            icon = Icons.Default.CheckCircle
+                        )
+                        LeyendaItemMejorado(
+                            color = TextDisabled,
+                            borderColor = TextDisabled,
+                            label = "Ocupado",
+                            icon = Icons.Default.Cancel
+                        )
+                        LeyendaItemMejorado(
+                            color = SecondaryOrange,
+                            borderColor = SecondaryOrange,
+                            label = "Seleccionado",
+                            icon = Icons.Default.Star
+                        )
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            // Mapa del bus mejorado
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Título del conductor
-                        Surface(
-                            color = PrimaryBlueLight.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.fillMaxWidth(0.5f)
+                        // Conductor
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(0.6f)
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            PrimaryBlue.copy(alpha = 0.15f),
+                                            PrimaryBlue.copy(alpha = 0.25f)
+                                        )
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.padding(8.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = "Conductor",
-                                    tint = PrimaryBlue,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "Conductor",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = PrimaryBlue
-                                )
-                            }
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = "Conductor",
+                                tint = PrimaryBlue,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Conductor",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryBlue
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
                         // Asientos organizados por filas
                         val filas = asientosMutable.groupBy { it.fila }
@@ -329,12 +270,12 @@ fun SeleccionAsientosScreen(
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 asientosEnFila.forEachIndexed { index, asiento ->
-                                    AsientoItem(
+                                    AsientoItemMejorado(
                                         asiento = asiento,
                                         isSeleccionado = asiento.numero == asientoSeleccionado,
                                         onClick = {
                                             if (asiento.estado == EstadoAsiento.DISPONIBLE) {
-                                                // Deseleccionar asiento anterior
+                                                // Deseleccionar anterior
                                                 asientoSeleccionado?.let { prevNumero ->
                                                     val prevIndex = asientosMutable.indexOfFirst { it.numero == prevNumero }
                                                     if (prevIndex != -1) {
@@ -344,7 +285,7 @@ fun SeleccionAsientosScreen(
                                                     }
                                                 }
 
-                                                // Seleccionar nuevo asiento
+                                                // Seleccionar nuevo
                                                 asientoSeleccionado = asiento.numero
                                                 val currentIndex = asientosMutable.indexOf(asiento)
                                                 asientosMutable[currentIndex] = asiento.copy(
@@ -356,13 +297,13 @@ fun SeleccionAsientosScreen(
 
                                     // Pasillo después de 2 asientos
                                     if (index == 1) {
-                                        Spacer(modifier = Modifier.width(24.dp))
+                                        Spacer(modifier = Modifier.width(32.dp))
                                     } else if (index < asientosEnFila.size - 1) {
-                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Spacer(modifier = Modifier.width(10.dp))
                                     }
                                 }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
                         }
                     }
                 }
@@ -373,14 +314,195 @@ fun SeleccionAsientosScreen(
             }
         }
     }
+
+    // Diálogo de confirmación
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = SuccessGreen,
+                    modifier = Modifier.size(56.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Confirmar asiento",
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Has seleccionado el asiento",
+                        textAlign = TextAlign.Center,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Nº $asientoSeleccionado",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = PrimaryBlue
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "¿Deseas continuar al pago?",
+                        textAlign = TextAlign.Center,
+                        color = TextSecondary
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showConfirmDialog = false
+                        asientoSeleccionado?.let { onContinuar(it) }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SuccessGreen
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Sí, continuar")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showConfirmDialog = false },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-fun AsientoItem(
+fun BottomBarSeleccionado(
+    numeroAsiento: Int,
+    precio: Double,
+    onContinuar: () -> Unit
+) {
+    Surface(
+        shadowElevation = 12.dp,
+        color = Color.White,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(SecondaryOrange, Color(0xFFFF6F00))
+                                ),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.EventSeat,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = "Asiento seleccionado",
+                            fontSize = 12.sp,
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Nº $numeroAsiento",
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = PrimaryBlue
+                        )
+                    }
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "Total",
+                        fontSize = 12.sp,
+                        color = TextSecondary,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "S/ ${precio.toInt()}.00",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = SuccessGreen
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onContinuar,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SecondaryOrange
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp
+                )
+            ) {
+                Text(
+                    text = "Continuar al pago",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    Icons.Default.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AsientoItemMejorado(
     asiento: Asiento,
     isSeleccionado: Boolean,
     onClick: () -> Unit
 ) {
+    val scale by animateFloatAsState(
+        targetValue = if (isSeleccionado) 1.1f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "scale"
+    )
+
     val backgroundColor = when {
         isSeleccionado -> SecondaryOrange
         asiento.estado == EstadoAsiento.OCUPADO -> TextDisabled
@@ -390,7 +512,7 @@ fun AsientoItem(
     val borderColor = when {
         isSeleccionado -> SecondaryOrange
         asiento.estado == EstadoAsiento.OCUPADO -> TextDisabled
-        else -> TextSecondary
+        else -> PrimaryBlue
     }
 
     val textColor = when {
@@ -401,15 +523,16 @@ fun AsientoItem(
 
     Box(
         modifier = Modifier
-            .size(50.dp)
+            .size(56.dp)
+            .scale(scale)
             .background(
                 color = backgroundColor,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp)
             )
             .border(
                 width = 2.dp,
                 color = borderColor,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp)
             )
             .clickable(enabled = asiento.estado != EstadoAsiento.OCUPADO) { onClick() },
         contentAlignment = Alignment.Center
@@ -419,11 +542,11 @@ fun AsientoItem(
                 Icons.Default.EventSeat,
                 contentDescription = "Asiento ${asiento.numero}",
                 tint = textColor,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(26.dp)
             )
             Text(
                 text = asiento.numero.toString(),
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = textColor
             )
@@ -432,32 +555,42 @@ fun AsientoItem(
 }
 
 @Composable
-fun LeyendaItem(
+fun LeyendaItemMejorado(
     color: Color,
     borderColor: Color,
-    label: String
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .size(24.dp)
+                .size(36.dp)
                 .background(
                     color = color,
-                    shape = RoundedCornerShape(4.dp)
+                    shape = RoundedCornerShape(8.dp)
                 )
                 .border(
                     width = 2.dp,
                     color = borderColor,
-                    shape = RoundedCornerShape(4.dp)
-                )
-        )
-        Spacer(modifier = Modifier.width(6.dp))
+                    shape = RoundedCornerShape(8.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = borderColor,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = label,
-            fontSize = 12.sp,
-            color = TextSecondary
+            fontSize = 11.sp,
+            color = TextSecondary,
+            fontWeight = FontWeight.Medium
         )
     }
 }

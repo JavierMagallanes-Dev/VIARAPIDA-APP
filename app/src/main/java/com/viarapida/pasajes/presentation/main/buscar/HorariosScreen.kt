@@ -1,5 +1,6 @@
 package com.viarapida.pasajes.presentation.main.buscar
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +14,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -21,8 +25,7 @@ import com.google.firebase.Timestamp
 import com.viarapida.pasajes.data.model.Destino
 import com.viarapida.pasajes.data.model.Horario
 import com.viarapida.pasajes.ui.theme.*
-import java.text.SimpleDateFormat
-import java.util.*
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +34,14 @@ fun HorariosScreen(
     onNavigateBack: () -> Unit,
     onHorarioSelected: (Horario) -> Unit
 ) {
+    var isLoading by remember { mutableStateOf(true) }
+
+    // Simular carga de horarios
+    LaunchedEffect(Unit) {
+        delay(800)
+        isLoading = false
+    }
+
     // Horarios de prueba
     val horarios = remember {
         listOf(
@@ -106,7 +117,12 @@ fun HorariosScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Horarios Disponibles") },
+                title = {
+                    Text(
+                        "Horarios Disponibles",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -126,85 +142,128 @@ fun HorariosScreen(
                 .padding(paddingValues)
                 .background(BackgroundLight)
         ) {
-            // Información del destino
+            // Información del destino con diseño mejorado
             item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    Box {
+                        // Gradiente superior
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(PrimaryBlue, SecondaryOrange)
+                                    )
+                                )
+                        )
+
+                        Column(
+                            modifier = Modifier.padding(20.dp)
                         ) {
-                            Column {
-                                Text(
-                                    text = destino.origen,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryBlue
-                                )
-                                Text(
-                                    text = "Origen",
-                                    fontSize = 12.sp,
-                                    color = TextSecondary
-                                )
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            // Ruta principal
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Origen
+                                Column(horizontalAlignment = Alignment.Start) {
+                                    Text(
+                                        text = "Salida",
+                                        fontSize = 11.sp,
+                                        color = TextSecondary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = destino.origen,
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = PrimaryBlue
+                                    )
+                                }
+
+                                // Flecha animada
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .background(
+                                            color = SecondaryOrange.copy(alpha = 0.15f),
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.ArrowForward,
+                                        contentDescription = null,
+                                        tint = SecondaryOrange,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+
+                                // Destino
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = "Llegada",
+                                        fontSize = 11.sp,
+                                        color = TextSecondary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = destino.destino,
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = PrimaryBlue
+                                    )
+                                }
                             }
 
-                            Icon(
-                                Icons.Default.ArrowForward,
-                                contentDescription = null,
-                                tint = SecondaryOrange,
-                                modifier = Modifier.size(32.dp)
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            Divider(
+                                color = DividerColor.copy(alpha = 0.3f),
+                                thickness = 1.dp
                             )
 
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = destino.destino,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryBlue
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            // Información del viaje
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                InfoChipDestino(
+                                    icon = Icons.Default.Schedule,
+                                    label = "Duración",
+                                    value = destino.duracionFormateada(),
+                                    color = InfoBlue
                                 )
-                                Text(
-                                    text = "Destino",
-                                    fontSize = 12.sp,
-                                    color = TextSecondary
+
+                                InfoChipDestino(
+                                    icon = Icons.Default.Route,
+                                    label = "Distancia",
+                                    value = "${destino.distanciaKm.toInt()} km",
+                                    color = SuccessGreen
+                                )
+
+                                InfoChipDestino(
+                                    icon = Icons.Default.AttachMoney,
+                                    label = "Desde",
+                                    value = "S/ ${destino.precio.toInt()}",
+                                    color = SecondaryOrange
                                 )
                             }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Divider(color = DividerColor)
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceAround
-                        ) {
-                            InfoChip(
-                                icon = Icons.Default.Schedule,
-                                label = "Duración",
-                                value = destino.duracionFormateada()
-                            )
-                            InfoChip(
-                                icon = Icons.Default.Route,
-                                label = "Distancia",
-                                value = "${destino.distanciaKm.toInt()} km"
-                            )
-                            InfoChip(
-                                icon = Icons.Default.AttachMoney,
-                                label = "Desde",
-                                value = destino.precioFormateado()
-                            )
                         }
                     }
                 }
@@ -212,23 +271,50 @@ fun HorariosScreen(
 
             // Título de horarios
             item {
-                Text(
-                    text = "Selecciona tu horario",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.AccessTime,
+                        contentDescription = null,
+                        tint = PrimaryBlue,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Selecciona tu horario",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "(${horarios.size})",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
+                    )
+                }
             }
 
-            // Lista de horarios
-            items(horarios) { horario ->
-                HorarioCard(
-                    horario = horario,
-                    destino = destino,
-                    onClick = { onHorarioSelected(horario) }
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+            // Loading o Lista de horarios
+            if (isLoading) {
+                items(3) {
+                    ShimmerHorarioCard()
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            } else {
+                items(horarios) { horario ->
+                    HorarioCardMejorado(
+                        horario = horario,
+                        destino = destino,
+                        onClick = { onHorarioSelected(horario) }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
 
             item {
@@ -239,27 +325,38 @@ fun HorariosScreen(
 }
 
 @Composable
-fun InfoChip(
+fun InfoChipDestino(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
-    value: String
+    value: String,
+    color: Color
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .background(
+                color = color.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = PrimaryBlue,
-            modifier = Modifier.size(24.dp)
+            tint = color,
+            modifier = Modifier.size(22.dp)
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = label,
-            fontSize = 12.sp,
-            color = TextSecondary
+            fontSize = 10.sp,
+            color = TextSecondary,
+            fontWeight = FontWeight.Medium
         )
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = value,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
             color = TextPrimary
         )
@@ -267,71 +364,115 @@ fun InfoChip(
 }
 
 @Composable
-fun HorarioCard(
+fun HorarioCardMejorado(
     horario: Horario,
     destino: Destino,
     onClick: () -> Unit
 ) {
+    var isPressed by remember { mutableStateOf(false) }
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "scale"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            .scale(scale)
+            .clickable {
+                isPressed = true
+                onClick()
+            },
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
-            // Tipo de bus y disponibilidad
+            // Header: Tipo de bus y disponibilidad
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.DirectionsBus,
-                        contentDescription = null,
-                        tint = PrimaryBlue,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        PrimaryBlue.copy(alpha = 0.2f),
+                                        PrimaryBlueDark.copy(alpha = 0.2f)
+                                    )
+                                ),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.DirectionsBus,
+                            contentDescription = null,
+                            tint = PrimaryBlue,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
                     Column {
                         Text(
                             text = horario.tipoBus,
-                            fontSize = 16.sp,
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
                         )
-                        Text(
-                            text = "${horario.asientosDisponibles} asientos disponibles",
-                            fontSize = 12.sp,
-                            color = if (horario.asientosDisponibles < 10) ErrorRed else SuccessGreen
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.EventSeat,
+                                contentDescription = null,
+                                tint = if (horario.asientosDisponibles < 10) ErrorRed else SuccessGreen,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${horario.asientosDisponibles} disponibles",
+                                fontSize = 12.sp,
+                                color = if (horario.asientosDisponibles < 10) ErrorRed else SuccessGreen,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
 
-                // Indicador de ocupación
+                // Indicador circular de ocupación
                 Box(
-                    modifier = Modifier
-                        .size(50.dp)
-                        .background(
-                            color = when {
-                                horario.porcentajeOcupacion() < 50 -> SuccessGreen.copy(alpha = 0.2f)
-                                horario.porcentajeOcupacion() < 80 -> WarningYellow.copy(alpha = 0.2f)
-                                else -> ErrorRed.copy(alpha = 0.2f)
-                            },
-                            shape = CircleShape
-                        ),
+                    modifier = Modifier.size(60.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    CircularProgressIndicator(
+                        progress = { (horario.asientosTotales - horario.asientosDisponibles).toFloat() / horario.asientosTotales },
+                        modifier = Modifier.fillMaxSize(),
+                        color = when {
+                            horario.porcentajeOcupacion() < 50 -> SuccessGreen
+                            horario.porcentajeOcupacion() < 80 -> WarningYellow
+                            else -> ErrorRed
+                        },
+                        strokeWidth = 5.dp,
+                        trackColor = Color.LightGray.copy(alpha = 0.2f),
+                    )
                     Text(
                         text = "${horario.porcentajeOcupacion()}%",
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = when {
                             horario.porcentajeOcupacion() < 50 -> SuccessGreen
@@ -342,64 +483,92 @@ fun HorarioCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Horarios
+            // Horarios con diseño mejorado
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = horario.horaSalida,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
-                    )
+                // Hora de salida
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(
+                            color = PrimaryBlue.copy(alpha = 0.08f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(12.dp)
+                ) {
                     Text(
                         text = "Salida",
-                        fontSize = 12.sp,
-                        color = TextSecondary
+                        fontSize = 11.sp,
+                        color = TextSecondary,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = horario.horaSalida,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = PrimaryBlue
                     )
                 }
 
+                // Duración
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(0.8f)
                 ) {
                     Icon(
                         Icons.Default.ArrowForward,
                         contentDescription = null,
-                        tint = TextSecondary
+                        tint = TextSecondary,
+                        modifier = Modifier.size(24.dp)
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = destino.duracionFormateada(),
-                        fontSize = 12.sp,
-                        color = TextSecondary
+                        fontSize = 11.sp,
+                        color = TextSecondary,
+                        fontWeight = FontWeight.Medium
                     )
                 }
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = horario.horaLlegada,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
-                    )
+                // Hora de llegada
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(
+                            color = SecondaryOrange.copy(alpha = 0.08f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(12.dp)
+                ) {
                     Text(
                         text = "Llegada",
-                        fontSize = 12.sp,
-                        color = TextSecondary
+                        fontSize = 11.sp,
+                        color = TextSecondary,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = horario.horaLlegada,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = SecondaryOrange
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            Divider(color = DividerColor)
+            Divider(color = DividerColor.copy(alpha = 0.3f))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Precio y botón
             Row(
@@ -411,37 +580,86 @@ fun HorarioCard(
                     Text(
                         text = "Precio por persona",
                         fontSize = 12.sp,
-                        color = TextSecondary
+                        color = TextSecondary,
+                        fontWeight = FontWeight.Medium
                     )
-                    Text(
-                        text = destino.precioFormateado(),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
-                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = "S/",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = SuccessGreen
+                        )
+                        Text(
+                            text = " ${destino.precio.toInt()}",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = SuccessGreen
+                        )
+                        Text(
+                            text = ".00",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = SuccessGreen
+                        )
+                    }
                 }
 
                 Button(
                     onClick = onClick,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = SecondaryOrange
                     ),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 4.dp
+                    ),
+                    contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp)
                 ) {
                     Text(
                         text = "Seleccionar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Icon(
                         Icons.Default.ArrowForward,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ShimmerHorarioCard() {
+    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .height(200.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.LightGray.copy(alpha = alpha))
+        )
     }
 }
