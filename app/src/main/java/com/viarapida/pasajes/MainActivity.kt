@@ -4,47 +4,50 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.google.gson.Gson
-import com.viarapida.pasajes.presentation.auth.login.LoginScreen
-import com.viarapida.pasajes.presentation.auth.register.RegisterScreen
-import com.viarapida.pasajes.presentation.main.home.HomeScreen
-import com.viarapida.pasajes.presentation.main.buscar.BuscarScreen
-import com.viarapida.pasajes.presentation.main.buscar.HorariosScreen
-import com.viarapida.pasajes.presentation.main.buscar.PagoScreen
-import com.viarapida.pasajes.presentation.main.buscar.ConfirmacionScreen
-import com.viarapida.pasajes.presentation.splash.SplashScreen
 import com.viarapida.pasajes.data.model.Destino
 import com.viarapida.pasajes.data.model.Horario
-import java.net.URLEncoder
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
-import com.viarapida.pasajes.ui.theme.ViaRapidaTheme
+import com.viarapida.pasajes.data.model.Pasaje
+import com.viarapida.pasajes.presentation.auth.login.LoginScreen
+import com.viarapida.pasajes.presentation.auth.register.RegisterScreen
+import com.viarapida.pasajes.presentation.main.buscar.BuscarScreen
+import com.viarapida.pasajes.presentation.main.buscar.ConfirmacionScreen
+import com.viarapida.pasajes.presentation.main.buscar.HorariosScreen
+import com.viarapida.pasajes.presentation.main.buscar.PagoScreen
 import com.viarapida.pasajes.presentation.main.buscar.SeleccionAsientosScreen
-
+import com.viarapida.pasajes.presentation.main.home.HomeScreen
+import com.viarapida.pasajes.presentation.main.misviajes.DetallePasajeScreen
+import com.viarapida.pasajes.presentation.main.misviajes.MisViajesScreen
+import com.viarapida.pasajes.presentation.main.perfil.PerfilScreen
+import com.viarapida.pasajes.presentation.splash.SplashScreen as AppSplashScreen
+import com.viarapida.pasajes.ui.theme.ViaRapidaTheme
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Instalar Splash Screen nativo
         installSplashScreen()
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         setContent {
             ViaRapidaTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize()
-                ) {
+                Surface(modifier = Modifier.fillMaxSize()) {
                     ViaRapidaApp()
                 }
             }
@@ -60,9 +63,8 @@ fun ViaRapidaApp() {
         navController = navController,
         startDestination = "splash"
     ) {
-        // Splash Screen
         composable("splash") {
-            SplashScreen(
+            AppSplashScreen(
                 onNavigateToLogin = {
                     navController.navigate("login") {
                         popUpTo("splash") { inclusive = true }
@@ -71,12 +73,9 @@ fun ViaRapidaApp() {
             )
         }
 
-        // Login Screen
         composable("login") {
             LoginScreen(
-                onNavigateToRegister = {
-                    navController.navigate("register")
-                },
+                onNavigateToRegister = { navController.navigate("register") },
                 onNavigateToHome = {
                     navController.navigate("home") {
                         popUpTo("login") { inclusive = true }
@@ -85,12 +84,9 @@ fun ViaRapidaApp() {
             )
         }
 
-        // Register Screen
         composable("register") {
             RegisterScreen(
-                onNavigateToLogin = {
-                    navController.popBackStack()
-                },
+                onNavigateToLogin = { navController.popBackStack() },
                 onNavigateToHome = {
                     navController.navigate("home") {
                         popUpTo("register") { inclusive = true }
@@ -99,27 +95,17 @@ fun ViaRapidaApp() {
             )
         }
 
-        // Home Screen
         composable("home") {
             HomeScreen(
-                onNavigateToBuscar = {
-                    navController.navigate("buscar")
-                },
-                onNavigateToMisViajes = {
-                    // TODO: Navegar a mis viajes
-                },
-                onNavigateToPerfil = {
-                    // TODO: Navegar a perfil
-                }
+                onNavigateToBuscar = { navController.navigate("buscar") },
+                onNavigateToMisViajes = { navController.navigate("mis_viajes") },
+                onNavigateToPerfil = { navController.navigate("perfil") }
             )
         }
 
-        // Buscar Screen
         composable("buscar") {
             BuscarScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
+                onNavigateBack = { navController.popBackStack() },
                 onDestinoSelected = { destino ->
                     val destinoJson = Gson().toJson(destino)
                     val encodedDestino = URLEncoder.encode(destinoJson, StandardCharsets.UTF_8.toString())
@@ -128,7 +114,6 @@ fun ViaRapidaApp() {
             )
         }
 
-        // Horarios Screen
         composable(
             route = "horarios/{destinoJson}",
             arguments = listOf(navArgument("destinoJson") { type = NavType.StringType })
@@ -148,7 +133,6 @@ fun ViaRapidaApp() {
             )
         }
 
-        // Selección de Asientos Screen
         composable(
             route = "seleccion_asientos/{destinoJson}/{horarioJson}",
             arguments = listOf(
@@ -158,10 +142,8 @@ fun ViaRapidaApp() {
         ) { backStackEntry ->
             val destinoJson = backStackEntry.arguments?.getString("destinoJson")
             val horarioJson = backStackEntry.arguments?.getString("horarioJson")
-
             val decodedDestinoJson = URLDecoder.decode(destinoJson, StandardCharsets.UTF_8.toString())
             val decodedHorarioJson = URLDecoder.decode(horarioJson, StandardCharsets.UTF_8.toString())
-
             val destino = Gson().fromJson(decodedDestinoJson, Destino::class.java)
             val horario = Gson().fromJson(decodedHorarioJson, Horario::class.java)
 
@@ -175,7 +157,6 @@ fun ViaRapidaApp() {
             )
         }
 
-        // Pago Screen
         composable(
             route = "pago/{destinoJson}/{horarioJson}/{numeroAsiento}",
             arguments = listOf(
@@ -187,10 +168,8 @@ fun ViaRapidaApp() {
             val destinoJson = backStackEntry.arguments?.getString("destinoJson")
             val horarioJson = backStackEntry.arguments?.getString("horarioJson")
             val numeroAsiento = backStackEntry.arguments?.getInt("numeroAsiento") ?: 0
-
             val decodedDestinoJson = URLDecoder.decode(destinoJson, StandardCharsets.UTF_8.toString())
             val decodedHorarioJson = URLDecoder.decode(horarioJson, StandardCharsets.UTF_8.toString())
-
             val destino = Gson().fromJson(decodedDestinoJson, Destino::class.java)
             val horario = Gson().fromJson(decodedHorarioJson, Horario::class.java)
 
@@ -207,7 +186,6 @@ fun ViaRapidaApp() {
             )
         }
 
-        // Confirmación Screen
         composable(
             route = "confirmacion/{destinoJson}/{horarioJson}/{numeroAsiento}",
             arguments = listOf(
@@ -219,10 +197,8 @@ fun ViaRapidaApp() {
             val destinoJson = backStackEntry.arguments?.getString("destinoJson")
             val horarioJson = backStackEntry.arguments?.getString("horarioJson")
             val numeroAsiento = backStackEntry.arguments?.getInt("numeroAsiento") ?: 0
-
             val decodedDestinoJson = URLDecoder.decode(destinoJson, StandardCharsets.UTF_8.toString())
             val decodedHorarioJson = URLDecoder.decode(horarioJson, StandardCharsets.UTF_8.toString())
-
             val destino = Gson().fromJson(decodedDestinoJson, Destino::class.java)
             val horario = Gson().fromJson(decodedHorarioJson, Horario::class.java)
 
@@ -235,8 +211,47 @@ fun ViaRapidaApp() {
                         popUpTo("home") { inclusive = true }
                     }
                 },
-                onDescargarPasaje = {
-                    // TODO: Implementar descarga de PDF
+                onDescargarPasaje = { }
+            )
+        }
+
+        composable("mis_viajes") {
+            MisViajesScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onPasajeClick = { pasaje ->
+                    val pasajeJson = Gson().toJson(pasaje)
+                    val encodedPasaje = URLEncoder.encode(pasajeJson, StandardCharsets.UTF_8.toString())
+                    navController.navigate("detalle_pasaje/$encodedPasaje")
+                }
+            )
+        }
+
+        composable(
+            route = "detalle_pasaje/{pasajeJson}",
+            arguments = listOf(navArgument("pasajeJson") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val pasajeJson = backStackEntry.arguments?.getString("pasajeJson")
+            val decodedJson = URLDecoder.decode(pasajeJson, StandardCharsets.UTF_8.toString())
+            val pasaje = Gson().fromJson(decodedJson, Pasaje::class.java)
+
+            DetallePasajeScreen(
+                pasaje = pasaje,
+                onNavigateBack = { navController.popBackStack() },
+                onDescargar = { },
+                onCancelar = { navController.popBackStack() }
+            )
+        }
+
+        composable("perfil") {
+            PerfilScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onEditarPerfil = {
+                    // TODO: Implementar edición de perfil
+                },
+                onCerrarSesion = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
